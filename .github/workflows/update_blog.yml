@@ -2,7 +2,7 @@ name: AI Multi-Category Blog Auto-Updater
 
 on:
   schedule:
-    - cron: '0 0 * * *' # ينشر يومياً
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 jobs:
@@ -18,7 +18,7 @@ jobs:
           python-version: '3.9'
 
       - name: Install dependencies
-        run: pip install google-generativeai requests
+        run: pip install -q -U google-generativeai requests
 
       - name: Run Intelligent Script
         env:
@@ -36,10 +36,15 @@ jobs:
           # 1. جلب أخبار متنوعة
           url = f'https://newsapi.org/v2/everything?q=finance+OR+investing+OR+AI+tools&language=en&pageSize=5&apiKey={news_key}'
           news_data = requests.get(url).json()
-          article = news_data['articles'][0] # نأخذ أول خبر كمثال
+          
+          if 'articles' not in news_data or not news_data['articles']:
+              print("No news found")
+              exit(1)
+              
+          article = news_data['articles'][0]
 
-          # 2. Gemini يقرر التصنيف ويكتب المقال
-          model = genai.GenerativeModel('gemini-pro')
+          # 2. Gemini 1.5 Flash - النسخة الأسرع والأحدث
+          model = genai.GenerativeModel('gemini-1.5-flash')
           prompt = f"""
           Analyze this news: {article['title']}. 
           1. Choose the best category from: [FINANCE, AI, INVESTING, HUSTLES, TIPS].
@@ -48,21 +53,28 @@ jobs:
           CATEGORY: [The Category Name]
           CONTENT: [The HTML Content]
           """
-          response = model.generate_content(prompt).text
+          response = model.generate_content(prompt)
+          text_response = response.text
 
           # 3. استخراج التصنيف والمحتوى
-          category = response.split('CONTENT:')[0].replace('CATEGORY:', '').strip()
-          new_html = response.split('CONTENT:')[1].strip()
+          try:
+              category = text_response.split('CONTENT:')[0].replace('CATEGORY:', '').strip()
+              new_html = text_response.split('CONTENT:')[1].strip()
+          except:
+              print("Error parsing Gemini response")
+              exit(1)
 
           # 4. حقن المقال في المكان الصحيح
           with open('index.html', 'r', encoding='utf-8') as f:
               content = f.read()
 
           tag = f""
-          updated_content = content.replace(tag, f"{tag}\n<div class='new-post'>{new_html}</div>")
-
-          with open('index.html', 'w', encoding='utf-8') as f:
-              f.write(updated_content)
+          if tag in content:
+              updated_content = content.replace(tag, f"{tag}\n<article class='new-post'>\n{new_html}\n</article>")
+              with open('index.html', 'w', encoding='utf-8') as f:
+                  f.write(updated_content)
+          else:
+              print(f"Tag {tag} not found in index.html")
           EOF
 
       - name: Commit and Push
