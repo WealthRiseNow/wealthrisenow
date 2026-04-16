@@ -1,0 +1,74 @@
+name: AI Multi-Category Blog Auto-Updater
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # ينشر يومياً
+  workflow_dispatch:
+
+jobs:
+  update-blog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install google-generativeai requests
+
+      - name: Run Intelligent Script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
+        run: |
+          python - <<EOF
+          import os
+          import google.generativeai as genai
+          import requests
+
+          genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+          news_key = os.getenv('NEWS_API_KEY')
+
+          # 1. جلب أخبار متنوعة
+          url = f'https://newsapi.org/v2/everything?q=finance+OR+investing+OR+AI+tools&language=en&pageSize=5&apiKey={news_key}'
+          news_data = requests.get(url).json()
+          article = news_data['articles'][0] # نأخذ أول خبر كمثال
+
+          # 2. Gemini يقرر التصنيف ويكتب المقال
+          model = genai.GenerativeModel('gemini-pro')
+          prompt = f"""
+          Analyze this news: {article['title']}. 
+          1. Choose the best category from: [FINANCE, AI, INVESTING, HUSTLES, TIPS].
+          2. Write a professional blog post in HTML.
+          Return your answer in this exact format:
+          CATEGORY: [The Category Name]
+          CONTENT: [The HTML Content]
+          """
+          response = model.generate_content(prompt).text
+
+          # 3. استخراج التصنيف والمحتوى
+          category = response.split('CONTENT:')[0].replace('CATEGORY:', '').strip()
+          new_html = response.split('CONTENT:')[1].strip()
+
+          # 4. حقن المقال في المكان الصحيح
+          with open('index.html', 'r', encoding='utf-8') as f:
+              content = f.read()
+
+          tag = f""
+          updated_content = content.replace(tag, f"{tag}\n<div class='new-post'>{new_html}</div>")
+
+          with open('index.html', 'w', encoding='utf-8') as f:
+              f.write(updated_content)
+          EOF
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name "WealthRiseNow Bot"
+          git config --global user.email "bot@wealthrisenow.com"
+          git add index.html
+          git commit -m "New AI article in correct category"
+          git push
