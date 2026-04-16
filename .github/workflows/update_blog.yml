@@ -42,7 +42,8 @@ jobs:
           print(f"News fetched successfully: {article['title']}")
 
           print("2. Sending data to Gemini...")
-          gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+          # هنا التغيير الوحيد: استخدمنا الموديل الأحدث 2.5
+          gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
           headers = {'Content-Type': 'application/json'}
           prompt = f"Analyze this news: {source_text}. 1. Choose ONE category from exactly these options: [FINANCE, AI, INVESTING, HUSTLES, TIPS]. 2. Write a short, professional blog post in HTML format. Return ONLY your answer in this exact format:\nCATEGORY: [Name]\nCONTENT: [HTML Content]"
           
