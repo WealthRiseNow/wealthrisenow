@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WealthRiseNow | Master Your Money. Leverage AI. Rise Higher.</title>
+    <meta name="description" content="The premier destination for modern investors looking to master their personal finances and leverage AI to build generational wealth.">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            black: '#0A0A0A',
+                            gold: '#FFD700',
+                            blue: '#00D4FF',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @layer base {
+            body {
+                background-color: #0A0A0A;
+                color: white;
+                cursor: none;
+                overflow-x: hidden;
+            }
+            ::-webkit-scrollbar { width: 8px; }
+            ::-webkit-scrollbar-track { background: #0A0A0A; }
+            ::-webkit-scrollbar-thumb { background: #FFD700; border-radius: 10px; }
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+        }
+
+        .cinematic-gradient {
+            background: radial-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.05) 0%, transparent 40%);
+        }
+
+        .custom-cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #FFD700;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.1s ease;
+            transform: translate(-50%, -50%);
+        }
+
+        .custom-cursor-dot {
+            width: 4px;
+            height: 4px;
+            background: #00D4FF;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+        }
+
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: #FFD700;
+            z-index: 100;
+            width: 0%;
+        }
+
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #0A0A0A;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+
+        .particle {
+            position: absolute;
+            background: #FFD700;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Custom Cursor -->
+    <div id="cursor" class="custom-cursor hidden md:block"></div>
+    <div id="cursor-dot" class="custom-cursor-dot hidden md:block"></div>
+
+    <!-- Reading Progress -->
+    <div id="progress" class="reading-progress"></div>
+
+    <!-- Loader -->
+    <div id="loader">
+        <div class="w-20 h-20 bg-brand-gold rounded-2xl flex items-center justify-center mb-6 animate-pulse">
+            <span class="text-brand-black font-display font-bold text-4xl italic">W</span>
+        </div>
+        <div class="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+            <div id="loader-bar" class="h-full bg-brand-gold w-0 transition-all duration-1000"></div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-brand-black/80 backdrop-blur-md border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center">
+                    <a href="#" onclick="showPage('home')" class="flex items-center space-x-2">
+                        <div class="w-10 h-10 bg-brand-gold rounded-lg flex items-center justify-center">
+                            <span class="text-brand-black font-display font-bold text-xl italic">W</span>
+                        </div>
+                        <span class="text-2xl font-display font-bold tracking-tighter">
+                            WealthRise<span class="text-brand-gold">Now</span>
+                        </span>
+                    </a>
+                </div>
+
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <a href="#" onclick="showPage('home')" class="text-gray-300 hover:text-brand-gold px-3 py-2 text-sm font-medium transition-colors">Home</a>
+                        <a href="#" onclick="showPage('blog')" class="text-gray-300 hover:text-brand-gold px-3 py-2 text-sm font-medium transition-colors">Blog</a>
+                        <a href="#" onclick="showPage('categories')" class="text-gray-300 hover:text-brand-gold px-3 py-2 text-sm font-medium transition-colors">Categories</a>
+                        <a href="#" onclick="showPage('products')" class="text-gray-300 hover:text-brand-gold px-3 py-2 text-sm font-medium transition-colors">Products</a>
+                        <a href="#" onclick="showPage('about')" class="text-gray-300 hover:text-brand-gold px-3 py-2 text-sm font-medium transition-colors">About</a>
+                    </div>
+                </div>
+
+                <div class="hidden md:flex items-center space-x-6">
+                    <i data-lucide="search" class="text-gray-300 hover:text-brand-gold cursor-pointer w-5 h-5"></i>
+                    <a href="#" onclick="showPage('newsletter')" class="bg-brand-gold text-brand-black px-6 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform">Subscribe</a>
+                </div>
+
+                <div class="md:hidden">
+                    <i data-lucide="menu" class="text-gray-300 w-6 h-6 cursor-pointer" id="mobile-menu-btn"></i>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="pt-20">
+        
+        <!-- HOME PAGE -->
+        <section id="home" class="page active">
+            <!-- Hero -->
+            <div class="relative min-h-[90vh] flex items-center justify-center text-center px-4 overflow-hidden">
+                <div class="absolute inset-0 cinematic-gradient pointer-events-none"></div>
+                <div id="particles-container" class="absolute inset-0 pointer-events-none opacity-30"></div>
+                
+                <div class="relative z-10 max-w-4xl">
+                    <span class="inline-block px-4 py-1.5 rounded-full bg-brand-gold/10 border border-brand-gold/20 text-brand-gold text-xs font-bold uppercase tracking-[0.2em] mb-8">The Future of Finance is Here</span>
+                    <h1 class="text-6xl md:text-8xl font-display font-bold tracking-tighter leading-none mb-8">
+                        Rise Above the <br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-gold via-white to-brand-blue">Financial Noise</span>
+                    </h1>
+                    <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-12">Master your personal finances and leverage cutting-edge AI tools to build generational wealth in the modern digital era.</p>
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
+                        <button onclick="showPage('blog')" class="w-full sm:w-auto bg-brand-gold text-brand-black px-10 py-4 rounded-full font-bold text-lg hover:scale-105 transition-transform flex items-center justify-center">
+                            Explore Articles <i data-lucide="arrow-right" class="ml-2 w-5 h-5"></i>
+                        </button>
+                        <button onclick="showPage('newsletter')" class="w-full sm:w-auto bg-white/5 backdrop-blur-md border border-white/10 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-white/10 transition-all">Join Newsletter</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="py-20 border-y border-white/5 bg-white/[0.02]">
+                <div class="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
+                    <div class="text-center">
+                        <i data-lucide="users" class="mx-auto mb-4 text-brand-gold opacity-50 w-6 h-6"></i>
+                        <div class="text-3xl md:text-4xl font-display font-bold mb-2">500K+</div>
+                        <div class="text-gray-500 text-xs font-bold uppercase tracking-widest">Active Readers</div>
+                    </div>
+                    <div class="text-center">
+                        <i data-lucide="trending-up" class="mx-auto mb-4 text-brand-gold opacity-50 w-6 h-6"></i>
+                        <div class="text-3xl md:text-4xl font-display font-bold mb-2">1,200+</div>
+                        <div class="text-gray-500 text-xs font-bold uppercase tracking-widest">Premium Articles</div>
+                    </div>
+                    <div class="text-center">
+                        <i data-lucide="globe" class="mx-auto mb-4 text-brand-gold opacity-50 w-6 h-6"></i>
+                        <div class="text-3xl md:text-4xl font-display font-bold mb-2">45+</div>
+                        <div class="text-gray-500 text-xs font-bold uppercase tracking-widest">Countries Reached</div>
+                    </div>
+                    <div class="text-center">
+                        <i data-lucide="cpu" class="mx-auto mb-4 text-brand-gold opacity-50 w-6 h-6"></i>
+                        <div class="text-3xl md:text-4xl font-display font-bold mb-2">150+</div>
+                        <div class="text-gray-500 text-xs font-bold uppercase tracking-widest">AI Tools Reviewed</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Featured Articles -->
+            <div class="py-32 max-w-7xl mx-auto px-4">
+                <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+                    <div>
+                        <h2 class="text-4xl md:text-5xl font-display font-bold mb-4">Featured Insights</h2>
+                        <p class="text-gray-400 max-w-xl">Hand-picked strategies and deep dives into the world of finance and technology.</p>
+                    </div>
+                    <button onclick="showPage('blog')" class="text-brand-gold font-bold flex items-center hover:translate-x-2 transition-transform">
+                        View All Articles <i data-lucide="arrow-right" class="ml-2 w-5 h-5"></i>
+                    </button>
+                </div>
+                <div id="featured-grid" class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <!-- Articles injected by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- BLOG PAGE -->
+        <section id="blog" class="page">
+            <div class="max-w-7xl mx-auto px-4 py-20">
+                <header class="mb-20 text-center">
+                    <h1 class="text-5xl md:text-7xl font-display font-bold mb-6">Wealth <span class="text-brand-gold">Insights</span></h1>
+                    <p class="text-gray-400 text-lg max-w-2xl mx-auto">Deep dives into personal finance, AI automation, and wealth-building strategies.</p>
+                </header>
+                <div id="blog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Articles injected by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ARTICLE PAGE -->
+        <section id="article" class="page">
+            <div id="article-content">
+                <!-- Content injected by JS -->
+            </div>
+        </section>
+
+        <!-- CATEGORIES PAGE -->
+        <section id="categories" class="page">
+            <div class="max-w-7xl mx-auto px-4 py-20 text-center">
+                <h1 class="text-5xl md:text-7xl font-display font-bold mb-16">Explore <span class="text-brand-gold">Topics</span></h1>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="categories-grid">
+                    <!-- Categories injected by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- PRODUCTS PAGE -->
+        <section id="products" class="page">
+            <div class="max-w-7xl mx-auto px-4 py-20">
+                <header class="mb-20 text-center">
+                    <h1 class="text-5xl md:text-7xl font-display font-bold mb-6">Digital <span class="text-brand-gold">Mastery</span></h1>
+                    <p class="text-gray-400 text-lg max-w-2xl mx-auto">Premium toolkits, blueprints, and resources designed to accelerate your journey to financial freedom.</p>
+                </header>
+                <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <!-- Products injected by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ABOUT PAGE -->
+        <section id="about" class="page">
+            <div class="max-w-7xl mx-auto px-4 py-20 text-center">
+                <h1 class="text-6xl md:text-9xl font-display font-bold mb-8 tracking-tighter">Our <span class="text-brand-gold">Mission</span></h1>
+                <p class="text-gray-400 text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed mb-20">Empowering the next generation of investors to master their finances and leverage the power of artificial intelligence to build generational wealth.</p>
+                <div class="glass-card p-12 max-w-4xl mx-auto text-left">
+                    <h2 class="text-3xl font-display font-bold mb-6">The WealthRiseNow Story</h2>
+                    <p class="text-gray-400 mb-6">Founded in 2024, WealthRiseNow began with a simple observation: the traditional financial world was moving too slowly for the rapid technological shifts of the 21st century.</p>
+                    <p class="text-gray-400">Today, we serve over 500,000 monthly readers across 45 countries, providing them with the insights they need to navigate the volatile markets of the modern era.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- NEWSLETTER PAGE -->
+        <section id="newsletter" class="page">
+            <div class="max-w-7xl mx-auto px-4 py-20 flex items-center justify-center min-h-[80vh]">
+                <div class="glass-card p-12 max-w-xl w-full text-center">
+                    <h2 class="text-4xl font-display font-bold mb-6">Join the <span class="text-brand-gold">Elite</span></h2>
+                    <p class="text-gray-400 mb-10">Get the weekly AI wealth report delivered to your inbox. Join 500,000+ readers.</p>
+                    <form class="space-y-4" onsubmit="event.preventDefault(); alert('Subscribed!');">
+                        <input type="text" placeholder="Full Name" class="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-6 focus:outline-none focus:border-brand-gold transition-colors">
+                        <input type="email" placeholder="Email Address" class="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-6 focus:outline-none focus:border-brand-gold transition-colors">
+                        <button class="w-full bg-brand-gold text-brand-black py-4 rounded-xl font-bold text-lg hover:scale-[1.02] transition-transform">Get Instant Access</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-brand-black border-t border-white/10 pt-20 pb-10">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center space-x-2 mb-6">
+                        <div class="w-10 h-10 bg-brand-gold rounded-lg flex items-center justify-center">
+                            <span class="text-brand-black font-display font-bold text-xl italic">W</span>
+                        </div>
+                        <span class="text-2xl font-display font-bold tracking-tighter">WealthRise<span class="text-brand-gold">Now</span></span>
+                    </div>
+                    <p class="text-gray-400 max-w-md mb-8">We are the premier destination for modern investors looking to master their personal finances and leverage AI to build generational wealth.</p>
+                </div>
+                <div>
+                    <h4 class="font-display font-bold text-lg mb-6">Quick Links</h4>
+                    <ul class="space-y-4 text-gray-400">
+                        <li><a href="#" onclick="showPage('blog')" class="hover:text-brand-gold">Latest Articles</a></li>
+                        <li><a href="#" onclick="showPage('categories')" class="hover:text-brand-gold">Categories</a></li>
+                        <li><a href="#" onclick="showPage('products')" class="hover:text-brand-gold">Digital Products</a></li>
+                        <li><a href="#" onclick="showPage('about')" class="hover:text-brand-gold">Our Mission</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-display font-bold text-lg mb-6">Socials</h4>
+                    <div class="flex space-x-4">
+                        <i data-lucide="twitter" class="text-gray-400 hover:text-brand-gold cursor-pointer"></i>
+                        <i data-lucide="instagram" class="text-gray-400 hover:text-brand-gold cursor-pointer"></i>
+                        <i data-lucide="linkedin" class="text-gray-400 hover:text-brand-gold cursor-pointer"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-white/5 pt-8 text-center text-gray-500 text-xs">
+                <p>© 2026 WealthRiseNow. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // DATA
+        const articles = [
+            {
+                id: 'ai-wealth-2026',
+                title: 'How AI is Redefining Wealth Creation in 2026',
+                excerpt: 'Discover the top AI tools that are helping investors outperform the market and automate their passive income streams.',
+                category: 'AI Tools',
+                date: 'Apr 10, 2026',
+                readingTime: '8 min',
+                image: 'https://picsum.photos/seed/ai-wealth/1200/600',
+                featured: true
+            },
+            {
+                id: 'passive-income-guide',
+                title: 'The Ultimate Guide to Passive Income for Gen Z',
+                excerpt: 'Forget the 9-5. Learn how to build a digital empire that works for you while you sleep.',
+                category: 'Side Hustles',
+                date: 'Apr 08, 2026',
+                readingTime: '12 min',
+                image: 'https://picsum.photos/seed/passive/1200/600',
+                featured: true
+            },
+            {
+                id: 'crypto-investing-basics',
+                title: 'Crypto Investing: Beyond the Hype',
+                excerpt: 'A deep dive into blockchain technology and how to safely allocate your portfolio in a volatile market.',
+                category: 'Investing',
+                date: 'Apr 05, 2026',
+                readingTime: '10 min',
+                image: 'https://picsum.photos/seed/crypto/1200/600',
+                featured: false
+            }
+        ];
+
+        const products = [
+            {
+                id: 'ai-investor-toolkit',
+                name: 'AI Investor Toolkit',
+                description: 'A comprehensive collection of prompts, tools, and templates for the modern AI-driven investor.',
+                price: '$49',
+                image: 'https://picsum.photos/seed/toolkit/600/400'
+            },
+            {
+                id: 'passive-income-blueprint',
+                name: 'Passive Income Blueprint',
+                description: 'The exact step-by-step system we used to build a $10k/month blog in 12 months.',
+                price: '$99',
+                image: 'https://picsum.photos/seed/blueprint/600/400'
+            }
+        ];
+
+        const categories = [
+            { id: 'personal-finance', name: 'Personal Finance', icon: 'wallet' },
+            { id: 'ai-tools', name: 'AI Tools', icon: 'cpu' },
+            { id: 'investing', name: 'Investing', icon: 'trending-up' },
+            { id: 'side-hustles', name: 'Side Hustles', icon: 'users' },
+            { id: 'money-tips', name: 'Money Tips', icon: 'globe' }
+        ];
+
+        // UI LOGIC
+        function showPage(pageId, articleId = null) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const target = document.getElementById(pageId);
+            if (target) {
+                target.classList.add('active');
+                window.scrollTo(0, 0);
+            }
+
+            if (pageId === 'article' && articleId) {
+                renderArticle(articleId);
+            }
+        }
+
+        function renderArticle(id) {
+            const article = articles.find(a => a.id === id);
+            if (!article) return;
+            
+            const container = document.getElementById('article-content');
+            container.innerHTML = `
+                <header class="relative h-[60vh] overflow-hidden">
+                    <img src="${article.image}" class="w-full h-full object-cover opacity-40">
+                    <div class="absolute inset-0 bg-gradient-to-t from-brand-black to-transparent"></div>
+                    <div class="absolute inset-0 flex items-end pb-20 px-4">
+                        <div class="max-w-4xl mx-auto w-full">
+                            <span class="text-brand-gold text-xs font-bold uppercase tracking-widest mb-4 block">${article.category}</span>
+                            <h1 class="text-4xl md:text-6xl font-display font-bold mb-6">${article.title}</h1>
+                            <div class="flex items-center space-x-6 text-gray-400 text-sm">
+                                <span>${article.date}</span>
+                                <span>${article.readingTime} read</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+                <div class="max-w-4xl mx-auto px-4 py-20 prose prose-invert">
+                    <p class="text-xl text-gray-300 italic mb-12">${article.excerpt}</p>
+                    <div class="text-gray-400 leading-loose space-y-6">
+                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                        <h2 class="text-2xl font-display font-bold text-white mt-10">The Future of Wealth</h2>
+                        <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function renderGrids() {
+            // Featured Home
+            const featuredGrid = document.getElementById('featured-grid');
+            featuredGrid.innerHTML = articles.filter(a => a.featured).map(a => createArticleCard(a)).join('');
+
+            // Blog Grid
+            const blogGrid = document.getElementById('blog-grid');
+            blogGrid.innerHTML = articles.map(a => createArticleCard(a)).join('');
+
+            // Categories
+            const catGrid = document.getElementById('categories-grid');
+            catGrid.innerHTML = categories.map(c => `
+                <div class="glass-card p-10 group cursor-pointer hover:-translate-y-2 transition-all" onclick="showPage('blog')">
+                    <div class="w-16 h-16 bg-brand-gold/10 rounded-2xl flex items-center justify-center mb-8 mx-auto group-hover:bg-brand-gold group-hover:text-brand-black transition-all">
+                        <i data-lucide="${c.icon}" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-2xl font-display font-bold mb-2">${c.name}</h3>
+                </div>
+            `).join('');
+
+            // Products
+            const prodGrid = document.getElementById('products-grid');
+            prodGrid.innerHTML = products.map(p => `
+                <div class="glass-card overflow-hidden flex flex-col md:flex-row">
+                    <img src="${p.image}" class="md:w-1/2 object-cover h-64 md:h-auto">
+                    <div class="p-10 md:w-1/2 flex flex-col">
+                        <h3 class="text-2xl font-display font-bold mb-4">${p.name}</h3>
+                        <p class="text-gray-400 text-sm mb-8 flex-grow">${p.description}</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-3xl font-display font-bold">${p.price}</span>
+                            <button class="bg-brand-gold text-brand-black px-8 py-3 rounded-full font-bold text-sm hover:scale-105 transition-transform">Buy Now</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function createArticleCard(a) {
+            return `
+                <div class="glass-card overflow-hidden group cursor-pointer" onclick="showPage('article', '${a.id}')">
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="${a.image}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <div class="absolute top-4 left-4">
+                            <span class="bg-brand-black/60 backdrop-blur-md text-brand-gold text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-brand-gold/20">${a.category}</span>
+                        </div>
+                    </div>
+                    <div class="p-8">
+                        <div class="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-4">${a.date} • ${a.readingTime}</div>
+                        <h3 class="text-2xl font-display font-bold mb-4 group-hover:text-brand-gold transition-colors leading-tight">${a.title}</h3>
+                        <p class="text-gray-400 text-sm line-clamp-3">${a.excerpt}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // CURSOR & PARTICLES
+        document.addEventListener('mousemove', (e) => {
+            const cursor = document.getElementById('cursor');
+            const dot = document.getElementById('cursor-dot');
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            dot.style.left = e.clientX + 'px';
+            dot.style.top = e.clientY + 'px';
+        });
+
+        function createParticles() {
+            const container = document.getElementById('particles-container');
+            for (let i = 0; i < 30; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                const size = Math.random() * 3 + 1;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.top = Math.random() * 100 + '%';
+                p.style.animation = `float ${Math.random() * 10 + 10}s linear infinite`;
+                container.appendChild(p);
+            }
+        }
+
+        // INITIALIZATION
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById("progress").style.width = scrolled + "%";
+        });
+
+        window.onload = () => {
+            lucide.createIcons();
+            renderGrids();
+            createParticles();
+            
+            // Loader animation
+            const bar = document.getElementById('loader-bar');
+            bar.style.width = '100%';
+            setTimeout(() => {
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+            }, 1000);
+        };
+    </script>
+
+    <style>
+        @keyframes float {
+            from { transform: translateY(0); opacity: 0; }
+            50% { opacity: 0.5; }
+            to { transform: translateY(-500px); opacity: 0; }
+        }
+    </style>
+</body>
+</html>
