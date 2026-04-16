@@ -12,14 +12,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
-      - name: Install dependencies
-        run: pip install -q -U google-generativeai requests
-
       - name: Run Intelligent Script
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -27,54 +19,37 @@ jobs:
         run: |
           python - <<EOF
           import os
-          import google.generativeai as genai
           import requests
+          import json
 
-          genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-          news_key = os.getenv('NEWS_API_KEY')
+          # 1. جلب خبر من NewsAPI
+          news_url = f"https://newsapi.org/v2/everything?q=finance+OR+investing+OR+AI+tools&language=en&pageSize=1&apiKey={os.getenv('NEWS_API_KEY')}"
+          news_res = requests.get(news_url).json()
+          article = news_res['articles'][0]
+          source_text = f"Title: {article['title']}. Description: {article['description']}"
 
-          # 1. جلب أخبار متنوعة
-          url = f'https://newsapi.org/v2/everything?q=finance+OR+investing+OR+AI+tools&language=en&pageSize=5&apiKey={news_key}'
-          news_data = requests.get(url).json()
+          # 2. مخاطبة Gemini مباشرة (Direct API Call)
+          gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={os.getenv('GEMINI_API_KEY')}"
+          headers = {'Content-Type': 'application/json'}
+          prompt = f"Analyze this news: {source_text}. 1. Choose category from: [FINANCE, AI, INVESTING, HUSTLES, TIPS]. 2. Write a professional blog post in HTML. Return ONLY in this format: CATEGORY: [Name] CONTENT: [HTML Content]"
           
-          if 'articles' not in news_data or not news_data['articles']:
-              print("No news found")
-              exit(1)
-              
-          article = news_data['articles'][0]
+          data = {"contents": [{"parts": [{"text": prompt}]}]}
+          response = requests.post(gemini_url, headers=headers, json=data).json()
+          
+          # استخراج النص
+          full_text = response['candidates'][0]['content']['parts'][0]['text']
+          category = full_text.split('CONTENT:')[0].replace('CATEGORY:', '').strip()
+          new_html = full_text.split('CONTENT:')[1].strip()
 
-          # 2. Gemini 1.5 Flash - النسخة الأسرع والأحدث
-          model = genai.GenerativeModel('gemini-1.5-flash')
-          prompt = f"""
-          Analyze this news: {article['title']}. 
-          1. Choose the best category from: [FINANCE, AI, INVESTING, HUSTLES, TIPS].
-          2. Write a professional blog post in HTML.
-          Return your answer in this exact format:
-          CATEGORY: [The Category Name]
-          CONTENT: [The HTML Content]
-          """
-          response = model.generate_content(prompt)
-          text_response = response.text
-
-          # 3. استخراج التصنيف والمحتوى
-          try:
-              category = text_response.split('CONTENT:')[0].replace('CATEGORY:', '').strip()
-              new_html = text_response.split('CONTENT:')[1].strip()
-          except:
-              print("Error parsing Gemini response")
-              exit(1)
-
-          # 4. حقن المقال في المكان الصحيح
+          # 3. تحديث الملف
           with open('index.html', 'r', encoding='utf-8') as f:
               content = f.read()
 
           tag = f""
           if tag in content:
-              updated_content = content.replace(tag, f"{tag}\n<article class='new-post'>\n{new_html}\n</article>")
+              updated_content = content.replace(tag, f"{tag}\n<article class='p-6 bg-gray-800 rounded-lg shadow-xl mb-6'>\n{new_html}\n</article>")
               with open('index.html', 'w', encoding='utf-8') as f:
                   f.write(updated_content)
-          else:
-              print(f"Tag {tag} not found in index.html")
           EOF
 
       - name: Commit and Push
@@ -82,5 +57,5 @@ jobs:
           git config --global user.name "WealthRiseNow Bot"
           git config --global user.email "bot@wealthrisenow.com"
           git add index.html
-          git commit -m "New AI article in correct category"
+          git commit -m "Confirmed: AI Daily Article Added"
           git push
